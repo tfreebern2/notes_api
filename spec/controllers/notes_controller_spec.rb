@@ -39,17 +39,54 @@ RSpec.describe NotesController, type: :controller do
     end
   end
 
-    describe "notes#create action validations" do
-      it "should properly deal with validation errors" do
-        post :create, params: { note: { title: '', content: '' } }
-        expect(response).to have_http_status(:unprocessable_entity)
-      end
-
-      it "should return error json on validation error" do
-        post :create, params: { note: { title: '', content:'' } }
-        json = JSON.parse(response.body)
-        expect(json["errors"]["content"][0]).to eq("can't be blank")
-        expect(json["errors"]["title"][0]).to eq("can't be blank")
-      end
+  describe "notes#create action validations" do
+    before do
+      post :create, params: { note: { title: '', content: '' } }
     end
+
+    it "should properly deal with validation errors" do
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "should return error json on validation error" do
+      json = JSON.parse(response.body)
+      expect(json["errors"]["content"][0]).to eq("can't be blank")
+      expect(json["errors"]["title"][0]).to eq("can't be blank")
+    end
+  end
+
+  describe "notes#show action" do
+    it "should return a note" do
+      note = FactoryGirl.create(:note)
+      get :show, params: { id: note.id }
+      json = JSON.parse(response.body)
+      expect(json['id']).to eq(note.id)
+    end
+  end
+
+  describe "notes#update action" do
+    before do
+      @note = FactoryGirl.create(:note)
+    end
+
+    it "should receive the updated note in response" do
+      put :update, params: { id: @note.id, note: { title: 'Updated First', content: 'Updated this note.' } }
+      json = JSON.parse(response.body)
+      expect(json['content']).to eq('Updated this note.')
+      expect(json['title']).to eq('Updated First')
+      expect(response).to be_success
+    end
+
+    it "should properly deal with validation errors" do
+      put :update, params: { id: @note.id, note: { title: '', content: '' } }
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "should return error json on validation error" do
+      put :update, params: { id: @note.id, note: { title: '', content:'' } }
+      json = JSON.parse(response.body)
+      expect(json["errors"]["content"][0]).to eq("can't be blank")
+      expect(json["errors"]["title"][0]).to eq("can't be blank")
+    end
+  end
 end
